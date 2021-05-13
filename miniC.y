@@ -89,11 +89,11 @@ liste_declarations	:
 		liste_declarations declaration
 		{
 			$$ = $1;
-			insert_symbol($1, $2);
+			insert_symbole($1, $2);
 		}
 	|
 		{
-			//création symbole factice
+			$$ = create_head(".");
 		}
 ;
 liste_fonctions	:	
@@ -115,7 +115,7 @@ declaration	:
 		}
 		
 ;
-liste_declarateurs	:	
+liste_declarateurs :	
 		liste_declarateurs_creator
 		{
 			$$ = $1;
@@ -145,12 +145,12 @@ declarateur	:
 		
 	|	declarateur_tableaux
 ;
-declarateur_tableaux	:	
+declarateur_tableaux :	
 		IDENTIFICATEUR 
 		
 	|	declarateur_tableaux '[' CONSTANTE ']'		
 ;
-fonction	:	
+fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
 		{
 			type_t node_type = FONCTION;

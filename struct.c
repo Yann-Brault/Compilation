@@ -293,12 +293,16 @@ void insert_symbole(symbole_t *list_symbole, symbole_t *symbole)
     }
     else
     {
-        insert_node(head, symbole);
+        insert_symbole(head, symbole);
     }
 }
 
 symbole_t *create_head(char *nom)
 {
-    symbole_t *new_symbol;
-    new_symbol = (symbole_t *)malloc
+    struct _symbole_t *new_symbole = (symbole_t *)malloc(sizeof(symbole_t));
+    char *name;
+    name = (char *)malloc(strlen(nom + 1) * sizeof(char));
+    strcpy(name, nom);
+    new_symbole->nom = name;
+    new_symbole->suivant = NULL;
 }
