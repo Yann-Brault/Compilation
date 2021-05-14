@@ -216,10 +216,11 @@ symbole_t *insert(char *nom)
     }
     s->nom = strdup(nom);
     s->suivant = NULL;
+    fprintf(stdout, "symbole %s a été ajouté\n", s->nom);
     return s;
 }
 
-symbole_t *search(char *nom)
+/*symbole_t *search(char *nom)
 {
     int h;
     symbole_t *s;
@@ -229,12 +230,34 @@ symbole_t *search(char *nom)
     precedent = NULL;
     while (s != NULL)
     {
+        fprintf(stdout, "recherche symbole %s\n", s->nom);
         if (strcmp(s->nom, nom) == 0)
         {
+            (stdout, "retour symbole %s\n", s->nom);
             return s;
         }
         precedent = s;
+        fprintf(stdout, "precedent symbole %s\n", precedent->nom);
         s = s->suivant;
+        fprintf(stdout, "nouveau symbole %s\n", s->nom);
+    }
+    return NULL;
+}*/
+
+symbole_t *research(char *nom)
+{
+    int index = hash(nom);
+    int i;
+    for (i = 0; i < TAILLE; i++)
+    {
+        if (table[i] != NULL)
+        {
+            if (strcmp(table[i]->nom, nom) == 0)
+            {
+                fprintf(stdout, "symbol found in table\n");
+                return table[i];
+            }
+        }
     }
     return NULL;
 }
@@ -275,7 +298,7 @@ int check_type(symbole_t *symbole, char *type)
     return 0;
 }
 
-void print_table(symbole_t *table)
+void print_symbole(symbole_t *table)
 {
     while (table != NULL)
     {
@@ -305,4 +328,26 @@ symbole_t *create_head(char *nom)
     strcpy(name, nom);
     new_symbole->nom = name;
     new_symbole->suivant = NULL;
+}
+
+void throw_error(char *error, int line)
+{
+    fprintf(stderr, "erreur sémantique ligne : %d, %s\n", line, error);
+    exit(1);
+}
+
+void print_table(symbole_t **table)
+{
+    int i;
+    for (i = 0; i < TAILLE; i++)
+    {
+        if (table[i] != NULL)
+        {
+            print_symbole(table[i]);
+        }
+        else
+        {
+            fprintf(stdout, "null\n");
+        }
+    }
 }

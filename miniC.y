@@ -5,6 +5,8 @@
 	#include "struct.h"
 
 	void yyerror(char *s);
+
+	extern int yylineno; 
 %}
 
 %union {
@@ -77,12 +79,13 @@
 programme	:	
 		liste_declarations liste_fonctions
 		{
+			fprintf(stdout, "programme\n");
 			int *count;
 			*count = 0;
 			type_t node_type = NONE;
 			$$ = init_tree("programme", $2, node_type);
 			dot_gen($$, count);		
-			print_tree($$);
+			//print_tree($$);
 		}
 ;
 liste_declarations	:
@@ -90,6 +93,7 @@ liste_declarations	:
 		{
 			$$ = $1;
 			insert_symbole($1, $2);
+
 		}
 	|
 		{
@@ -141,6 +145,7 @@ declarateur	:
 		IDENTIFICATEUR 
 		{
 			$$ = insert($1);
+			fprintf(stdout, "déclarateur inséré\n");
 		}
 		
 	|	declarateur_tableaux
@@ -153,18 +158,35 @@ declarateur_tableaux :
 fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
 		{
-			type_t node_type = FONCTION;
-			char *name;
-			name = (char *)malloc((strlen($1 + 1) + strlen($2 + 1) + strlen("," +1)) * sizeof(char));
-			strcpy(name, strcat($2, ","));
-			strcpy(name, strcat(name, $1));
-			$$ = init_tree(name, $6, node_type);
+			fprintf(stdout, "fonction\n");
+			symbole_t *temp = research($2);
+			if (temp == NULL) {
+				temp = insert($2);
+				add_type(temp, $1);
+				type_t node_type = FONCTION;
+				char *name;
+				name = (char *)malloc((strlen($1 + 1) + strlen($2 + 1) + strlen("," +1)) * sizeof(char));
+				strcpy(name, strcat($2, ","));
+				strcpy(name, strcat(name, $1));
+				$$ = init_tree(name, $6, node_type);
+			} else {
+				throw_error("id déjà utilisé", yylineno);
+			}
 		}
 	|	EXTERN type IDENTIFICATEUR '(' liste_parms ')' ';'
 		{
-			type_t node_type = EXT;
-			$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
-			$$->fils->next_to = init_tree($3, NULL, node_type);
+			fprintf(stdout, "fonction extern\n");
+			symbole_t *temp = research($3);
+			if (temp == NULL) {
+				temp = insert($3);
+				add_type(temp, $2);
+				type_t node_type = EXT;
+				$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
+				$$->fils->next_to = init_tree($3, NULL, node_type);
+			} else {
+				throw_error("id déjà utilisé", yylineno);
+			}
+			
 		}
 ;
 type	:
@@ -330,15 +352,27 @@ bloc	:
 appel	:	
 		IDENTIFICATEUR '(' liste_expressions ')' ';'
 		{
-			type_t node_type = APPEL;
-			$$ = init_tree($1, $3, node_type);
+			fprintf(stdout, "appel\n");
+			symbole_t *temp = research($1);
+			if (temp == NULL) {
+				throw_error("id non déclaré", yylineno);
+			} else {
+				type_t node_type = APPEL;
+				$$ = init_tree($1, $3, node_type);
+			}
 		}
 ;
 variable	:	
 		IDENTIFICATEUR 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree($1, NULL, node_type);
+			fprintf(stdout, "variable\n");
+			symbole_t *temp = research($1);
+			if (temp == NULL) {
+				throw_error("id non déclaré", yylineno);
+			} else {
+				type_t node_type = NONE;
+				$$ = init_tree($1, NULL, node_type);
+			}
 		}
 	|	tableau 
 		{
@@ -539,3 +573,9 @@ void yyerror(char *s)
 	exit(1);
 }
 
+int main()
+{
+	table_reset();
+	while (yyparse());
+	return 0;
+}

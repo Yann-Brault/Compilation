@@ -60,15 +60,17 @@ void dot_gen(tree_t *tree, int *counter);
 int hash(char *nom);
 void table_reset();
 symbole_t *insert(char *nom);
-symbole_t *search(char *nom);
+symbole_t *research(char *nom);
 void add_type(symbole_t *symbole, char *type);
 void add_type_on_list(symbole_t *symbole, char *type);
 char *get_type(symbole_t *symbole);
 void add_value(symbole_t *symbole, int valeur);
 int check_type(symbole_t *symbole, char *type);
-void print_table(symbole_t *table);
+void print_symbole(symbole_t *table);
+void print_table(symbole_t **table);
 void insert_symbole(symbole_t *list_symbole, symbole_t *symbole);
 symbole_t *create_head(char *nom);
+void throw_error(char *error, int line);
 symbole_t *table[TAILLE];
 
 #endif

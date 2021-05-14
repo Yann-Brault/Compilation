@@ -73,8 +73,3 @@ MULTI_COMM              [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
                         }
 %%
 
-int main()
-{
-	while (yyparse());
-	return 0;
-}
