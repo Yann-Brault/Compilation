@@ -166,6 +166,8 @@ void dot_gen(tree_t *tree, int *counter)
     close_file(fp);
 }
 
+//Table de symboles
+
 int hash(char *nom)
 {
     int i, r;
@@ -283,36 +285,6 @@ int check_type_s(symbole_t *symbole, char *type)
     return 0;
 }
 
-/*int check_type_t(tree_t *tree, char *type, int line)
-{
-    if (tree->node_type == CST)
-    {
-        return 1;
-    }
-    else if (tree->node_type == EXPR)
-    {
-        cmp_type_expr(tree->fils, tree->fils->next_to, line);
-    }
-    else
-    {
-        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
-        s1 = research(tree->node_name);
-        if (s1 != NULL)
-        {
-            if (strcmp(s1->type, type) == 0)
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            throw_error("problème de déclaration1", line);
-            return 0;
-        }
-    }
-    return 0;
-}*/
-
 int check_type_t(tree_t *tree, char *type, int line)
 {
     if (tree->node_type == VAR)
@@ -348,12 +320,12 @@ int check_type_t(tree_t *tree, char *type, int line)
     }
 }
 
-void print_symbole(symbole_t *table)
+void print_symbole(symbole_t *symbole)
 {
-    while (table != NULL)
+    while (symbole != NULL)
     {
-        fprintf(stdout, "symbole : %s \n type : %s \n value : %d \n\n", table->nom, table->type, table->valeur);
-        table = table->suivant;
+        fprintf(stdout, "symbole : %s\n type : %s\n\n", symbole->nom, symbole->type);
+        symbole = symbole->suivant;
     }
 }
 
@@ -404,48 +376,6 @@ void print_table(symbole_t **table)
     }
 }
 
-/*int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
-{
-    if (t2->node_type != APPEL)
-    {
-        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
-        s1 = research(t1->node_name);
-        if (s1 != NULL)
-        {
-            return 1;
-        }
-        else
-        {
-            throw_error("problème de déclaration2", line);
-        }
-    }
-    else
-    {
-        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
-        struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
-        s1 = research(t1->node_name);
-        s2 = research(t2->node_name);
-        if (s1 != NULL)
-        {
-            if (s2 != NULL)
-            {
-                if (strcmp(s1->type, s2->type) == 0)
-                {
-                    return 1;
-                }
-            }
-            else
-            {
-                throw_error("problème de déclaration3", line);
-            }
-        }
-        else
-        {
-            throw_error("problème de déclaration4", line);
-        }
-    }
-    return 0;
-}*/
 int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
 {
     symbole_t *s1;
@@ -506,78 +436,6 @@ int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
         }
     }
 }
-
-/*int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
-{
-    if (t1->node_type == CST)
-    {
-        if (t2->node_type == CST)
-        {
-            return 1;
-        }
-        else if (t2->node_type == EXPR)
-        {
-            cmp_type_expr(t2->fils, t2->fils->next_to, line);
-        }
-        else
-        {
-            struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
-            s2 = research(t2->node_name);
-            if (s2 != NULL)
-            {
-                return 1;
-            }
-            else
-            {
-                throw_error("problème de déclaration5", line);
-            }
-        }
-    }
-    else if (t1->node_type == EXPR)
-    {
-        cmp_type_expr(t1->fils, t1->fils->next_to, line);
-    }
-    else
-    {
-        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
-        s1 = research(t1->node_name);
-        if (s1 != NULL)
-        {
-            if (t2->node_type == CST)
-            {
-                return 1;
-            }
-            else if (t2->node_type == EXPR)
-            {
-                cmp_type_expr(t2->fils, t2->fils->next_to, line);
-            }
-            else
-            {
-                struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
-                s2 = research(t2->node_name);
-                if (s2 != NULL)
-                {
-                    if (strcmp(s1->type, s2->type) == 0)
-                    {
-                        return 1;
-                    }
-                    else
-                    {
-                        return 0;
-                    }
-                }
-                else
-                {
-                    throw_error("problème de déclaration6", line);
-                }
-            }
-        }
-        else
-        {
-            throw_error("problème de déclaration7", line);
-        }
-    }
-}*/
 
 int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
 {
@@ -675,4 +533,9 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
     {
         return 1;
     }
+}
+
+void add_follower(symbole_t *s1, symbole_t *s2)
+{
+    s1->suivant = s2;
 }

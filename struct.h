@@ -77,6 +77,7 @@ symbole_t *create_symbole(char *nom);
 void throw_error(char *error, int line);
 int cmp_type_affect(tree_t *t1, tree_t *t2, int line);
 int cmp_type_expr(tree_t *t1, tree_t *t2, int line);
+void add_follower(symbole_t *s1, symbole_t *s2);
 symbole_t *table[TAILLE];
 
 #endif

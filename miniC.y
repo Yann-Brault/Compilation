@@ -46,9 +46,9 @@
 %type <symbole> declarateur
 %type <symbole> declarateur_tableaux
 
-%type <tree> liste_parms
-%type <tree> liste_parms_creator
-%type <tree> parm
+%type <symbole> liste_parms
+%type <symbole> liste_parms_creator
+%type <symbole> parm
 
 %type <tree> liste_instructions
 %type <tree> instruction
@@ -141,7 +141,6 @@ liste_declarateurs_creator :
 		{
 			insert_symbole($1, $3);
 			$$ = $1;
-			//print_symbole($$);
 		}
 	|	declarateur
 		{
@@ -165,27 +164,13 @@ declarateur_tableaux :
 fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
 		{
-			/*fprintf(stdout, "fonction\n");
-        	struct _symbole_t *temp = (symbole_t *)malloc(sizeof(symbole_t));
-			temp = research($2);
-			if (temp == NULL) {
-				fprintf(stdout, "ici\n");
-				insert_in_table($2, $1);
-				fprintf(stdout, "là\n");
-				type_t node_type = FONCTION;
-				char *name;
-				name = (char *)malloc((strlen($1 + 1) + strlen($2 + 1) + strlen("," +1)) * sizeof(char));
-				strcpy(name, strcat($2, ","));
-				strcpy(name, strcat(name, $1));
-				$$ = init_tree(name, $6, node_type);
-			} else {
-				throw_error("id déjà utilisé", yylineno);
-			}*/
 			int result;
 			fprintf(stdout, "déclaration de fonction, lancement de l'insertion'\n");
 			symbole_t *symbole_to_insert;
 			symbole_to_insert = create_symbole($2);
 			add_type(symbole_to_insert, $1);
+			//add_follower(symbole_to_insert, $4);
+			print_symbole(symbole_to_insert);
 			result = insert_in_table(symbole_to_insert);
 			fprintf(stdout, "insertion terminée\n");
 			if (result == 1)
@@ -206,26 +191,13 @@ fonction :
 		}
 	|	EXTERN type IDENTIFICATEUR '(' liste_parms ')' ';'
 		{
-			/*print_table(table);
-			fprintf(stdout, "fonction extern\n");
-			struct _symbole_t *temp = (symbole_t *)malloc(sizeof(symbole_t));
-			temp = research($3);
-			fprintf(stdout, "affectation de temp\n");
-			if (temp == NULL) {
-				fprintf(stdout, "ici\n");
-				insert_in_table($3, $2);
-				fprintf(stdout, "là\n");
-				type_t node_type = EXT;
-				$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
-				$$->fils->next_to = init_tree($3, NULL, node_type);
-			} else {
-				throw_error("id déjà utilisé", yylineno);
-			}*/
 			int result;
 			fprintf(stdout, "déclaration de fonction, lancement de l'insertion'\n");
 			symbole_t *symbole_to_insert;
 			symbole_to_insert = create_symbole($3);
 			add_type(symbole_to_insert, $2);
+			//add_follower(symbole_to_insert, $5);
+			print_symbole(symbole_to_insert);
 			result = insert_in_table(symbole_to_insert);
 			fprintf(stdout, "insertion terminée\n");
 			if (result == 1)
@@ -264,8 +236,8 @@ liste_parms	:
 liste_parms_creator :
 		liste_parms_creator ',' parm 
 		{
-			$$ = $3; 
-			$$->next_to = $1;
+			insert_symbole($1, $3);
+			$$ = $1;
 		}
 	|	parm 
 		{
@@ -275,8 +247,8 @@ liste_parms_creator :
 parm	:	
 		INT IDENTIFICATEUR 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("int", init_tree($2, NULL, node_type), node_type);
+			$$ = create_symbole($2);
+			add_type($$, "int");
 		}
 ;
 liste_instructions :	
