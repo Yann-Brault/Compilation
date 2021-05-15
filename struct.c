@@ -187,66 +187,29 @@ void table_reset()
     }
 }
 
-symbole_t *insert(char *nom)
+int insert_in_table(symbole_t *symbole)
 {
-    int h;
-    symbole_t *s;
-    symbole_t *precedent;
-    h = hash(nom);
-    s = table[h];
-    precedent = NULL;
-    while (s != NULL)
+    char *nom = symbole->nom;
+    symbole_t *research_result;
+    research_result = research(nom);
+    if (research_result != NULL)
     {
-        if (strcmp(s->nom, nom) == 0)
-        {
-            return s;
-        }
-        precedent = s;
-        s = s->suivant;
-    }
-    if (precedent == NULL)
-    {
-        table[h] = (symbole_t *)malloc(sizeof(symbole_t));
-        s = table[h];
+        fprintf(stdout, "le symbole existe déjà dans la table, insertion impossible\n");
+
+        return 0;
     }
     else
     {
-        precedent->suivant = (symbole_t *)malloc(sizeof(symbole_t));
-        s = precedent->suivant;
+        int h;
+        h = hash(nom);
+        table[h] = symbole;
+        fprintf(stdout, "le symbole %s a été inséré dans la table en %d\n", nom, h);
+        return 1;
     }
-    s->nom = strdup(nom);
-    s->suivant = NULL;
-    fprintf(stdout, "symbole %s a été ajouté\n", s->nom);
-    return s;
 }
-
-/*symbole_t *search(char *nom)
-{
-    int h;
-    symbole_t *s;
-    symbole_t *precedent;
-    h = hash(nom);
-    s = table[h];
-    precedent = NULL;
-    while (s != NULL)
-    {
-        fprintf(stdout, "recherche symbole %s\n", s->nom);
-        if (strcmp(s->nom, nom) == 0)
-        {
-            (stdout, "retour symbole %s\n", s->nom);
-            return s;
-        }
-        precedent = s;
-        fprintf(stdout, "precedent symbole %s\n", precedent->nom);
-        s = s->suivant;
-        fprintf(stdout, "nouveau symbole %s\n", s->nom);
-    }
-    return NULL;
-}*/
 
 symbole_t *research(char *nom)
 {
-    int index = hash(nom);
     int i;
     for (i = 0; i < TAILLE; i++)
     {
@@ -254,8 +217,30 @@ symbole_t *research(char *nom)
         {
             if (strcmp(table[i]->nom, nom) == 0)
             {
-                fprintf(stdout, "symbol found in table\n");
+                fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
                 return table[i];
+            }
+            else if (table[i]->suivant != NULL)
+            {
+                symbole_t *current_symbole;
+                current_symbole = table[i]->suivant;
+                if (strcmp(current_symbole->nom, nom) == 0)
+                {
+                    fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
+                    return current_symbole;
+                }
+                else
+                {
+                    while (current_symbole->suivant != NULL)
+                    {
+                        if (strcmp(current_symbole->suivant->nom, nom) == 0)
+                        {
+                            fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
+                            return current_symbole->suivant;
+                        }
+                        current_symbole = current_symbole->suivant;
+                    }
+                }
             }
         }
     }
@@ -289,13 +274,78 @@ void add_value(symbole_t *symbole, int valeur)
     symbole->valeur = valeur;
 }
 
-int check_type(symbole_t *symbole, char *type)
+int check_type_s(symbole_t *symbole, char *type)
 {
     if (strcmp(symbole->type, type) == 0)
     {
         return 1;
     }
     return 0;
+}
+
+/*int check_type_t(tree_t *tree, char *type, int line)
+{
+    if (tree->node_type == CST)
+    {
+        return 1;
+    }
+    else if (tree->node_type == EXPR)
+    {
+        cmp_type_expr(tree->fils, tree->fils->next_to, line);
+    }
+    else
+    {
+        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
+        s1 = research(tree->node_name);
+        if (s1 != NULL)
+        {
+            if (strcmp(s1->type, type) == 0)
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            throw_error("problème de déclaration1", line);
+            return 0;
+        }
+    }
+    return 0;
+}*/
+
+int check_type_t(tree_t *tree, char *type, int line)
+{
+    if (tree->node_type == VAR)
+    {
+        symbole_t *symbole = research(tree->node_name);
+        if (symbole != NULL)
+        {
+            fprintf(stdout, "ici1\n");
+            return 1;
+        }
+        else
+        {
+            fprintf(stdout, "ici2\n");
+            return 0;
+        }
+    }
+    else if (tree->node_type == APPEL)
+    {
+        fprintf(stdout, "ici3\n");
+        return 0;
+    }
+    else if (tree->node_type == EXPR)
+    {
+        int result;
+        result = cmp_type_expr(tree->fils, tree->fils->next_to, line);
+        fprintf(stdout, "ici4\n");
+        return result;
+    }
+    else
+    {
+        fprintf(stdout, "ici5\n");
+        return 1;
+    }
 }
 
 void print_symbole(symbole_t *table)
@@ -320,13 +370,14 @@ void insert_symbole(symbole_t *list_symbole, symbole_t *symbole)
     }
 }
 
-symbole_t *create_head(char *nom)
+symbole_t *create_symbole(char *nom)
 {
     struct _symbole_t *new_symbole = (symbole_t *)malloc(sizeof(symbole_t));
     char *name;
     name = (char *)malloc(strlen(nom + 1) * sizeof(char));
     strcpy(name, nom);
     new_symbole->nom = name;
+    new_symbole->type = NULL;
     new_symbole->suivant = NULL;
 }
 
@@ -343,11 +394,285 @@ void print_table(symbole_t **table)
     {
         if (table[i] != NULL)
         {
+            fprintf(stdout, "%d\n", i);
             print_symbole(table[i]);
         }
         else
         {
-            fprintf(stdout, "null\n");
+            fprintf(stdout, "%d : null\n", i);
         }
+    }
+}
+
+/*int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
+{
+    if (t2->node_type != APPEL)
+    {
+        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
+        s1 = research(t1->node_name);
+        if (s1 != NULL)
+        {
+            return 1;
+        }
+        else
+        {
+            throw_error("problème de déclaration2", line);
+        }
+    }
+    else
+    {
+        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
+        struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
+        s1 = research(t1->node_name);
+        s2 = research(t2->node_name);
+        if (s1 != NULL)
+        {
+            if (s2 != NULL)
+            {
+                if (strcmp(s1->type, s2->type) == 0)
+                {
+                    return 1;
+                }
+            }
+            else
+            {
+                throw_error("problème de déclaration3", line);
+            }
+        }
+        else
+        {
+            throw_error("problème de déclaration4", line);
+        }
+    }
+    return 0;
+}*/
+int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
+{
+    symbole_t *s1;
+    symbole_t *s2;
+    s1 = research(t1->node_name);
+    if (s1 == NULL)
+    {
+        throw_error("partie gauche non déclarée", line);
+        return 0;
+    }
+    else
+    {
+        type_t type;
+        type = t2->node_type;
+        if (type == VAR)
+        {
+            s2 = research(t2->node_name);
+            if (s2 != NULL)
+            {
+                return 1;
+            }
+            else
+            {
+                throw_error("partie droite non déclarée", line);
+                return 0;
+            }
+        }
+        else if (type == APPEL)
+        {
+            s2 = research(t2->node_name);
+            if (s2 != NULL)
+            {
+                if (strcmp(get_type(s1), get_type(s2)) == 0)
+                {
+                    return 1;
+                }
+                else
+                {
+                    throw_error("types non équivalent", line);
+                    return 0;
+                }
+            }
+            else
+            {
+                throw_error("partie droite non déclarée", line);
+                return 0;
+            }
+        }
+        else if (type == EXPR)
+        {
+            int result;
+            result = cmp_type_expr(t2->fils, t2->fils->next_to, line);
+            return result;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+}
+
+/*int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
+{
+    if (t1->node_type == CST)
+    {
+        if (t2->node_type == CST)
+        {
+            return 1;
+        }
+        else if (t2->node_type == EXPR)
+        {
+            cmp_type_expr(t2->fils, t2->fils->next_to, line);
+        }
+        else
+        {
+            struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
+            s2 = research(t2->node_name);
+            if (s2 != NULL)
+            {
+                return 1;
+            }
+            else
+            {
+                throw_error("problème de déclaration5", line);
+            }
+        }
+    }
+    else if (t1->node_type == EXPR)
+    {
+        cmp_type_expr(t1->fils, t1->fils->next_to, line);
+    }
+    else
+    {
+        struct _symbole_t *s1 = (symbole_t *)malloc(sizeof(symbole_t));
+        s1 = research(t1->node_name);
+        if (s1 != NULL)
+        {
+            if (t2->node_type == CST)
+            {
+                return 1;
+            }
+            else if (t2->node_type == EXPR)
+            {
+                cmp_type_expr(t2->fils, t2->fils->next_to, line);
+            }
+            else
+            {
+                struct _symbole_t *s2 = (symbole_t *)malloc(sizeof(symbole_t));
+                s2 = research(t2->node_name);
+                if (s2 != NULL)
+                {
+                    if (strcmp(s1->type, s2->type) == 0)
+                    {
+                        return 1;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+                else
+                {
+                    throw_error("problème de déclaration6", line);
+                }
+            }
+        }
+        else
+        {
+            throw_error("problème de déclaration7", line);
+        }
+    }
+}*/
+
+int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
+{
+    symbole_t *s1;
+    symbole_t *s2;
+    if (t1->node_type == VAR)
+    {
+        s1 = research(t1->node_name);
+        if (s1 == NULL)
+        {
+            fprintf(stdout, "ici6\n");
+            return 0;
+        }
+        else
+        {
+            if (t2->node_type == VAR)
+            {
+                s2 = research(t1->node_name);
+                if (s2 == NULL)
+                {
+                    fprintf(stdout, "ici7\n");
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            else if (t2->node_type == APPEL)
+            {
+                fprintf(stdout, "ici8\n");
+                return 0;
+            }
+            else if (t2->node_type == EXPR)
+            {
+                int result;
+                result = cmp_type_expr(t2->fils, t2->fils->next_to, line);
+                fprintf(stdout, "ici9\n");
+                return result;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+    }
+    else if (t1->node_type == APPEL)
+    {
+        fprintf(stdout, "ici10\n");
+        return 0;
+    }
+    else if (t1->node_type == EXPR)
+    {
+        int result;
+        result = cmp_type_expr(t1->fils, t1->fils->next_to, line);
+        if (result == 1)
+        {
+            if (t2->node_type == VAR)
+            {
+                s2 = research(t2->node_name);
+                if (s2 == NULL)
+                {
+                    fprintf(stdout, "ici11\n");
+                    return 0;
+                }
+                else
+                {
+                    return 1;
+                }
+            }
+            else if (t2->node_type == APPEL)
+            {
+                fprintf(stdout, "ici12\n");
+                return 0;
+            }
+            else if (t2->node_type == EXPR)
+            {
+                int result;
+                result = cmp_type_expr(t2->fils, t2->fils->next_to, line);
+                fprintf(stdout, "ici13\n");
+                return result;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            fprintf(stdout, "ici14\n");
+            return 0;
+        }
+    }
+    else
+    {
+        return 1;
     }
 }

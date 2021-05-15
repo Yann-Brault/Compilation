@@ -1,11 +1,12 @@
-extern int printd( int i );
+extern int printd(int i);
 
-int main() {
+int main()
+{
   int j;
   j = 123;
   printd(-j);
   printd(-123);
-  printd(-(123+0));
-  printd(-(j+0));
+  printd(-(123 + 0));
+  printd(-(j + 0));
   return 0;
 }

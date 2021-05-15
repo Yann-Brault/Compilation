@@ -80,6 +80,7 @@ programme	:
 		liste_declarations liste_fonctions
 		{
 			fprintf(stdout, "programme\n");
+			//print_table(table);
 			int *count;
 			*count = 0;
 			type_t node_type = NONE;
@@ -91,13 +92,17 @@ programme	:
 liste_declarations	:
 		liste_declarations declaration
 		{
-			$$ = $1;
-			insert_symbole($1, $2);
-
+			int result;
+			result = insert_in_table($2);
+			if (result != 1)
+			{
+				throw_error("déclaration impossible", yylineno);
+			}
+			print_table(table);
 		}
 	|
 		{
-			$$ = create_head(".");
+			$$ = NULL;
 		}
 ;
 liste_fonctions	:	
@@ -123,6 +128,7 @@ liste_declarateurs :
 		liste_declarateurs_creator
 		{
 			$$ = $1;
+			print_symbole($$);
 		}
 	|	
 		{
@@ -133,8 +139,9 @@ liste_declarateurs :
 liste_declarateurs_creator :
 		liste_declarateurs_creator ',' declarateur 
 		{
-			$$ = $3;
-			$$->suivant = $1;
+			insert_symbole($1, $3);
+			$$ = $1;
+			//print_symbole($$);
 		}
 	|	declarateur
 		{
@@ -144,8 +151,8 @@ liste_declarateurs_creator :
 declarateur	:	
 		IDENTIFICATEUR 
 		{
-			$$ = insert($1);
-			fprintf(stdout, "déclarateur inséré\n");
+			$$ = create_symbole($1);
+			fprintf(stdout, "déclarateur créé\n");
 		}
 		
 	|	declarateur_tableaux
@@ -158,11 +165,13 @@ declarateur_tableaux :
 fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
 		{
-			fprintf(stdout, "fonction\n");
-			symbole_t *temp = research($2);
+			/*fprintf(stdout, "fonction\n");
+        	struct _symbole_t *temp = (symbole_t *)malloc(sizeof(symbole_t));
+			temp = research($2);
 			if (temp == NULL) {
-				temp = insert($2);
-				add_type(temp, $1);
+				fprintf(stdout, "ici\n");
+				insert_in_table($2, $1);
+				fprintf(stdout, "là\n");
 				type_t node_type = FONCTION;
 				char *name;
 				name = (char *)malloc((strlen($1 + 1) + strlen($2 + 1) + strlen("," +1)) * sizeof(char));
@@ -171,22 +180,65 @@ fonction :
 				$$ = init_tree(name, $6, node_type);
 			} else {
 				throw_error("id déjà utilisé", yylineno);
+			}*/
+			int result;
+			fprintf(stdout, "déclaration de fonction, lancement de l'insertion'\n");
+			symbole_t *symbole_to_insert;
+			symbole_to_insert = create_symbole($2);
+			add_type(symbole_to_insert, $1);
+			result = insert_in_table(symbole_to_insert);
+			fprintf(stdout, "insertion terminée\n");
+			if (result == 1)
+			{
+				fprintf(stdout, "sémantique validée, on crée l'arbre de la fonction\n");
+				type_t node_type = FONCTION;
+				char *name;
+				name = (char *)malloc((strlen($1 + 1) + strlen($2 + 1) + strlen("," +1)) * sizeof(char));
+				strcpy(name, strcat($2, ","));
+				strcpy(name, strcat(name, $1));
+				$$ = init_tree(name, $6, node_type);
+			}
+			else 
+			{
+				fprintf(stdout, "sémantique non validée, lancement de l'erreur\n");
+				throw_error("id déjà utilisé", yylineno);
 			}
 		}
 	|	EXTERN type IDENTIFICATEUR '(' liste_parms ')' ';'
 		{
+			/*print_table(table);
 			fprintf(stdout, "fonction extern\n");
-			symbole_t *temp = research($3);
+			struct _symbole_t *temp = (symbole_t *)malloc(sizeof(symbole_t));
+			temp = research($3);
+			fprintf(stdout, "affectation de temp\n");
 			if (temp == NULL) {
-				temp = insert($3);
-				add_type(temp, $2);
+				fprintf(stdout, "ici\n");
+				insert_in_table($3, $2);
+				fprintf(stdout, "là\n");
 				type_t node_type = EXT;
 				$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
 				$$->fils->next_to = init_tree($3, NULL, node_type);
 			} else {
 				throw_error("id déjà utilisé", yylineno);
+			}*/
+			int result;
+			fprintf(stdout, "déclaration de fonction, lancement de l'insertion'\n");
+			symbole_t *symbole_to_insert;
+			symbole_to_insert = create_symbole($3);
+			add_type(symbole_to_insert, $2);
+			result = insert_in_table(symbole_to_insert);
+			fprintf(stdout, "insertion terminée\n");
+			if (result == 1)
+			{
+				type_t node_type = EXT;
+				$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
+				$$->fils->next_to = init_tree($3, NULL, node_type);
 			}
-			
+			else 
+			{
+				fprintf(stdout, "sémantique non validée, lancement de l'erreur\n");
+				throw_error("id déjà utilisé", yylineno);
+			}
 		}
 ;
 type	:
@@ -338,9 +390,16 @@ saut	:
 affectation	:	
 		variable '=' expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree(":=", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_affect($1, $3, yylineno);
+			if (result == 1)
+			{
+				fprintf(stdout, "affectation validée\n");
+				type_t node_type = NONE;
+				$$ = init_tree(":=", $1, node_type);
+				$$->fils->next_to = $3;
+			} else {
+				throw_error("incompatibilité de type lors de l'affectation", yylineno);
+			}	
 		}
 ;
 bloc	:	
@@ -352,11 +411,12 @@ bloc	:
 appel	:	
 		IDENTIFICATEUR '(' liste_expressions ')' ';'
 		{
-			fprintf(stdout, "appel\n");
+			fprintf(stdout, "appel de fonction\n");
 			symbole_t *temp = research($1);
 			if (temp == NULL) {
 				throw_error("id non déclaré", yylineno);
 			} else {
+				fprintf(stdout, "la fonction est déclarée, on construit son arbre\n");
 				type_t node_type = APPEL;
 				$$ = init_tree($1, $3, node_type);
 			}
@@ -365,12 +425,13 @@ appel	:
 variable	:	
 		IDENTIFICATEUR 
 		{
-			fprintf(stdout, "variable\n");
+			fprintf(stdout, "utilisation de variable\n");
 			symbole_t *temp = research($1);
 			if (temp == NULL) {
 				throw_error("id non déclaré", yylineno);
 			} else {
-				type_t node_type = NONE;
+				fprintf(stdout, "la variable est déclarée, on construit son arbre\n");
+				type_t node_type = VAR;
 				$$ = init_tree($1, NULL, node_type);
 			}
 		}
@@ -420,64 +481,138 @@ expression	:
 		}
 	| 	expression PLUS expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("+", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("+", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type1", yylineno);
+			}
+			
 		}
 	| 	expression MOINS expression
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("-", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("-", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type2", yylineno);
+			}
+			
 		} 
 	| 	expression DIV expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("/", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("/", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type3", yylineno);
+			}
+			
 		}
 	| 	expression MUL expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("*", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("*", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type4", yylineno);
+			}
 		}
 	| 	expression RSHIFT expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree(">>", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree(">>", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type5", yylineno);
+			}
+			
 		}
 	| 	expression LSHIFT expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("<<", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("<<", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type6", yylineno);
+			}
+			
 		}
 	| 	expression BAND expression 
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("&", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("&", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type7", yylineno);
+			}
+			
 		}
 	| 	expression BOR expression
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("|", $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree("|", $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type8", yylineno);
+			}
+			
 		}
 	|	MOINS expression
 		{
-			type_t node_type = NONE;
-			$$ = init_tree("-", $2, node_type);
+			int result = check_type_t($2, "int", yylineno);
+			fprintf(stdout, "result : %d\n", result);
+			if (result == 1)
+			{
+				type_t node_type = CST;
+				$$ = init_tree("-", $2, node_type);
+			} else 
+			{
+				
+				throw_error("calcul de l'expression impossible, incompatibilité de type9", yylineno);
+			}
+			
 		}
 	|	CONSTANTE
 		{
-			type_t node_type = NONE;
+			type_t node_type = CST;
 			$$ = init_tree($1, NULL,node_type);
 		}
 	|	variable
 		{
+			fprintf(stdout, "expr produit variable\n");
 			$$ = $1;
 		}
 	|	IDENTIFICATEUR '(' liste_expressions ')'
@@ -504,9 +639,16 @@ condition	:
 		}
 	|	expression binary_comp expression
 		{
-			type_t node_type = NONE;
-			$$ = init_tree($2->node_name, $1, node_type);
-			$$->fils->next_to = $3;
+			int result = cmp_type_expr($1, $3, yylineno);
+			if (result == 1)
+			{
+				type_t node_type = EXPR;
+				$$ = init_tree($2->node_name, $1, node_type);
+				$$->fils->next_to = $3;
+			} else 
+			{
+				throw_error("calcul de l'expression impossible, incompatibilité de type10", yylineno);
+			}
 		}
 ;
 binary_op	:	

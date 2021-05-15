@@ -12,6 +12,9 @@ typedef enum
     RET,
     BRK,
     HEAD,
+    CST,
+    EXPR,
+    VAR,
     NONE
 } type_t;
 
@@ -59,18 +62,21 @@ void link_gen(tree_t *tree, FILE *fp);
 void dot_gen(tree_t *tree, int *counter);
 int hash(char *nom);
 void table_reset();
-symbole_t *insert(char *nom);
+int insert_in_table(symbole_t *symbole);
 symbole_t *research(char *nom);
 void add_type(symbole_t *symbole, char *type);
 void add_type_on_list(symbole_t *symbole, char *type);
 char *get_type(symbole_t *symbole);
 void add_value(symbole_t *symbole, int valeur);
-int check_type(symbole_t *symbole, char *type);
+int check_type_s(symbole_t *symbole, char *type);
+int check_type_t(tree_t *tree, char *type, int line);
 void print_symbole(symbole_t *table);
 void print_table(symbole_t **table);
 void insert_symbole(symbole_t *list_symbole, symbole_t *symbole);
-symbole_t *create_head(char *nom);
+symbole_t *create_symbole(char *nom);
 void throw_error(char *error, int line);
+int cmp_type_affect(tree_t *t1, tree_t *t2, int line);
+int cmp_type_expr(tree_t *t1, tree_t *t2, int line);
 symbole_t *table[TAILLE];
 
 #endif
