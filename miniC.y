@@ -86,7 +86,7 @@ programme	:
 			type_t node_type = NONE;
 			$$ = init_tree("programme", $2, node_type);
 			dot_gen($$, count);		
-			//print_tree($$);
+			print_tree($$);
 		}
 ;
 liste_declarations	:
@@ -164,12 +164,12 @@ declarateur_tableaux :
 fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
 		{
+
 			int result;
 			fprintf(stdout, "déclaration de fonction, lancement de l'insertion'\n");
 			symbole_t *symbole_to_insert;
 			symbole_to_insert = create_symbole($2);
 			add_type(symbole_to_insert, $1);
-			//add_follower(symbole_to_insert, $4);
 			print_symbole(symbole_to_insert);
 			result = insert_in_table(symbole_to_insert);
 			fprintf(stdout, "insertion terminée\n");
@@ -196,12 +196,13 @@ fonction :
 			symbole_t *symbole_to_insert;
 			symbole_to_insert = create_symbole($3);
 			add_type(symbole_to_insert, $2);
-			//add_follower(symbole_to_insert, $5);
+			add_follower(symbole_to_insert, $5);
 			print_symbole(symbole_to_insert);
 			result = insert_in_table(symbole_to_insert);
 			fprintf(stdout, "insertion terminée\n");
 			if (result == 1)
 			{
+				//print_table(table);
 				type_t node_type = EXT;
 				$$ = init_tree("extern", init_tree($2, NULL, node_type), node_type);
 				$$->fils->next_to = init_tree($3, NULL, node_type);
@@ -226,6 +227,16 @@ type	:
 liste_parms	:	
 		liste_parms_creator 
 		{ 
+			int result;
+			result = insert_in_table($1);
+			if (result != 0)
+			{
+				fprintf(stdout, "les paramètres de la fonction ont été ajoutés à la table\n");
+			}
+			else 
+			{
+				throw_error("problème de l'insertion des paramètres de la fonction", yylineno);
+			}
 			$$ = $1;
 		}
 	| 	

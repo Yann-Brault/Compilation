@@ -1,9 +1,12 @@
-extern int printd( int i );
+extern int printd(int x);
 
-int main() {
+int main()
+{
    int i;
-   for (i=0; i<10; i=i+1) {
-	if (i==5) break;
+   for (i = 0; i < 10; i = i + 1)
+   {
+      if (i == 5)
+         break;
    }
    printd(i);
 }

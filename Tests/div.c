@@ -1,4 +1,4 @@
-extern int printd(int i);
+extern int printd(int x);
 
 int main()
 {

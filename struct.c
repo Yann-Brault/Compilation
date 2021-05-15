@@ -116,6 +116,15 @@ void print_node(tree_t *tree, FILE *fp)
     case NONE:
         fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
         break;
+    case CST:
+        fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
+        break;
+    case EXPR:
+        fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
+        break;
+    case VAR:
+        fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
+        break;
     default:
         break;
     }
