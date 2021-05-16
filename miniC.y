@@ -80,7 +80,7 @@ programme	:
 		liste_declarations liste_fonctions
 		{
 			fprintf(stdout, "programme\n");
-			//print_table(table);
+			print_table(table);
 			int *count;
 			*count = 0;
 			type_t node_type = NONE;
@@ -119,6 +119,7 @@ liste_fonctions	:
 declaration	:	
 		type liste_declarateurs ';'
 		{
+			fprintf(stdout, "ici1\n");
 			add_type_on_list($2, $1);
 			$$ = $2;
 		}
@@ -127,11 +128,13 @@ declaration	:
 liste_declarateurs :	
 		liste_declarateurs_creator
 		{
+			fprintf(stdout, "ici2\n");
 			$$ = $1;
 			print_symbole($$);
 		}
 	|	
 		{
+			fprintf(stdout, "ici3\n");
 			$$ = NULL;
 		}
 		
@@ -139,27 +142,55 @@ liste_declarateurs :
 liste_declarateurs_creator :
 		liste_declarateurs_creator ',' declarateur 
 		{
+			fprintf(stdout, "ici4\n");
 			insert_symbole($1, $3);
 			$$ = $1;
 		}
 	|	declarateur
 		{
+			fprintf(stdout, "ici5\n");
 			$$ = $1;
 		}
 ;
 declarateur	:	
 		IDENTIFICATEUR 
 		{
+			fprintf(stdout, "ici6\n");
 			$$ = create_symbole($1);
 			fprintf(stdout, "déclarateur créé\n");
 		}
 		
 	|	declarateur_tableaux
+		{
+			fprintf(stdout, "ici7\n");
+			fprintf(stdout, "dans déclarateur\n");
+			$$ = $1;
+			
+			print_symbole($$);
+		}
 ;
 declarateur_tableaux :	
-		IDENTIFICATEUR 
+		IDENTIFICATEUR
+		{
+			fprintf(stdout, "ici8\n");
+			symbole_t *head = create_symbole($1);
+			//insert_symbole(head, $$);
+			print_symbole(head);
+			$$ = head;
+		}
 		
-	|	declarateur_tableaux '[' CONSTANTE ']'		
+	|	declarateur_tableaux '[' CONSTANTE ']'
+		{
+			fprintf(stdout, "ici9\n");
+			symbole_t *queue = create_symbole($3);
+			fprintf(stdout, "ici10\n");
+			print_symbole($1);
+			insert_symbole($1, queue);
+			fprintf(stdout, "ici11\n");
+			$$ = $1;
+			fprintf(stdout, "dans déclarateur tableau\n");
+			print_symbole($$);
+		}
 ;
 fonction :	
 		type IDENTIFICATEUR '(' liste_parms ')' bloc 
@@ -175,6 +206,7 @@ fonction :
 			fprintf(stdout, "insertion terminée\n");
 			if (result == 1)
 			{
+				print_table(table);
 				fprintf(stdout, "sémantique validée, on crée l'arbre de la fonction\n");
 				type_t node_type = FONCTION;
 				char *name;
@@ -373,7 +405,8 @@ saut	:
 affectation	:	
 		variable '=' expression 
 		{
-			int result = cmp_type_affect($1, $3, yylineno);
+			int result;
+			result = cmp_type_affect($1, $3, yylineno);
 			if (result == 1)
 			{
 				fprintf(stdout, "affectation validée\n");
@@ -420,15 +453,24 @@ variable	:
 		}
 	|	tableau 
 		{
-			type_t node_type = NONE;
+			type_t node_type = TAB;
 			$$ = init_tree("TAB", $1, node_type);
 		}
 ;
 tableau :
 		IDENTIFICATEUR
 		{
-			type_t node_type = NONE;
-			$$ = init_tree($1, NULL, node_type);
+			fprintf(stdout, "utilisation de variable tableau\n");
+			symbole_t *temp = research($1);
+			if (temp == NULL)
+			{
+				throw_error("id non déclaré", yylineno);
+			} else
+			{
+				type_t node_type = NONE;
+				$$ = init_tree($1, NULL, node_type);
+			}
+			
 		}
 	| 	tableau '[' expression ']'
 		{

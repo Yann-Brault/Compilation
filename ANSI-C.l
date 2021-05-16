@@ -1,5 +1,9 @@
 D                       [0-9] 
-L                       [a-zA-Z_] 
+L                       [a-zA-Z_]
+H                       [a-fA-F0-9] 
+E                       [Ee][+-]?{D}+ 
+FS                      (f|F|l|L)
+IS                      (u|U|l|L)*
 MULTI_COMM              [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 
 %{
@@ -39,6 +43,23 @@ MULTI_COMM              [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
                             return CONSTANTE; 
                         } 
 
+0[xX]{H}+{IS}?          { 
+                            yylval.value = strdup(yytext);
+                            return CONSTANTE; 
+                        }
+0{D}+{IS}?              { 
+                            yylval.value = strdup(yytext);
+                            return CONSTANTE; 
+                        } 
+{D}+{IS}?               { 
+                            yylval.value = strdup(yytext);
+                            return CONSTANTE; 
+                        } 
+{D}+{E}{FS}?            { 
+                            yylval.value = strdup(yytext);
+                            return CONSTANTE; 
+                        }
+
 ">>"                    { return RSHIFT; }
 "<<"                    { return LSHIFT;}
 "&&"                    { return LAND; }
@@ -65,8 +86,8 @@ MULTI_COMM              [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]
 ","                     { return ','; }
 "="                     { return '='; }
 ":"                     { return ':'; }
-
-[ \t\v\n\f]             {}
+\n                    {;}
+[ \t\v\f]             {;}
 .                       {
                             fprintf(stderr, "erreur lexicale ligne %d : %s.\n", yylineno, yytext);
                             exit(1);

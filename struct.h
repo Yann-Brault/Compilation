@@ -15,6 +15,7 @@ typedef enum
     CST,
     EXPR,
     VAR,
+    TAB,
     NONE
 } type_t;
 

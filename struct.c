@@ -389,6 +389,7 @@ int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
 {
     symbole_t *s1;
     symbole_t *s2;
+    fprintf(stdout, "dans affect : %s\n", t1->node_name);
     s1 = research(t1->node_name);
     if (s1 == NULL)
     {
