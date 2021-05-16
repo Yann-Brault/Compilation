@@ -125,6 +125,9 @@ void print_node(tree_t *tree, FILE *fp)
     case VAR:
         fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
         break;
+    case TAB:
+        fprintf(fp, "node_%d [label=\"%s\"shape=ellipse];\n", number, name);
+        break;
     default:
         break;
     }
@@ -205,8 +208,6 @@ int insert_in_table(symbole_t *symbole)
     research_result = research(nom);
     if (research_result != NULL)
     {
-        fprintf(stdout, "le symbole existe déjà dans la table, insertion impossible\n");
-
         return 0;
     }
     else
@@ -214,7 +215,6 @@ int insert_in_table(symbole_t *symbole)
         int h;
         h = hash(nom);
         table[h] = symbole;
-        fprintf(stdout, "le symbole %s a été inséré dans la table en %d\n", nom, h);
         return 1;
     }
 }
@@ -228,7 +228,6 @@ symbole_t *research(char *nom)
         {
             if (strcmp(table[i]->nom, nom) == 0)
             {
-                fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
                 return table[i];
             }
             else if (table[i]->suivant != NULL)
@@ -237,7 +236,6 @@ symbole_t *research(char *nom)
                 current_symbole = table[i]->suivant;
                 if (strcmp(current_symbole->nom, nom) == 0)
                 {
-                    fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
                     return current_symbole;
                 }
                 else
@@ -246,7 +244,6 @@ symbole_t *research(char *nom)
                     {
                         if (strcmp(current_symbole->suivant->nom, nom) == 0)
                         {
-                            fprintf(stdout, "symbol %s found in table, access to %d\n", nom, i);
                             return current_symbole->suivant;
                         }
                         current_symbole = current_symbole->suivant;
@@ -301,30 +298,25 @@ int check_type_t(tree_t *tree, char *type, int line)
         symbole_t *symbole = research(tree->node_name);
         if (symbole != NULL)
         {
-            fprintf(stdout, "ici1\n");
             return 1;
         }
         else
         {
-            fprintf(stdout, "ici2\n");
             return 0;
         }
     }
     else if (tree->node_type == APPEL)
     {
-        fprintf(stdout, "ici3\n");
         return 0;
     }
     else if (tree->node_type == EXPR)
     {
         int result;
         result = cmp_type_expr(tree->fils, tree->fils->next_to, line);
-        fprintf(stdout, "ici4\n");
         return result;
     }
     else
     {
-        fprintf(stdout, "ici5\n");
         return 1;
     }
 }
@@ -389,7 +381,6 @@ int cmp_type_affect(tree_t *t1, tree_t *t2, int line)
 {
     symbole_t *s1;
     symbole_t *s2;
-    fprintf(stdout, "dans affect : %s\n", t1->node_name);
     s1 = research(t1->node_name);
     if (s1 == NULL)
     {
@@ -456,7 +447,6 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
         s1 = research(t1->node_name);
         if (s1 == NULL)
         {
-            fprintf(stdout, "ici6\n");
             return 0;
         }
         else
@@ -466,7 +456,6 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
                 s2 = research(t1->node_name);
                 if (s2 == NULL)
                 {
-                    fprintf(stdout, "ici7\n");
                     return 0;
                 }
                 else
@@ -476,14 +465,12 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
             }
             else if (t2->node_type == APPEL)
             {
-                fprintf(stdout, "ici8\n");
                 return 0;
             }
             else if (t2->node_type == EXPR)
             {
                 int result;
                 result = cmp_type_expr(t2->fils, t2->fils->next_to, line);
-                fprintf(stdout, "ici9\n");
                 return result;
             }
             else
@@ -494,7 +481,6 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
     }
     else if (t1->node_type == APPEL)
     {
-        fprintf(stdout, "ici10\n");
         return 0;
     }
     else if (t1->node_type == EXPR)
@@ -508,7 +494,6 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
                 s2 = research(t2->node_name);
                 if (s2 == NULL)
                 {
-                    fprintf(stdout, "ici11\n");
                     return 0;
                 }
                 else
@@ -518,14 +503,12 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
             }
             else if (t2->node_type == APPEL)
             {
-                fprintf(stdout, "ici12\n");
                 return 0;
             }
             else if (t2->node_type == EXPR)
             {
                 int result;
                 result = cmp_type_expr(t2->fils, t2->fils->next_to, line);
-                fprintf(stdout, "ici13\n");
                 return result;
             }
             else
@@ -535,7 +518,6 @@ int cmp_type_expr(tree_t *t1, tree_t *t2, int line)
         }
         else
         {
-            fprintf(stdout, "ici14\n");
             return 0;
         }
     }
